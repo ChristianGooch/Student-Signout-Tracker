@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Classroom Sign-Out Tracker</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; text-align: center; }
+    h1 { font-size: 28px; margin-bottom: 20px; }
+    select, button { font-size: 20px; margin: 10px; padding: 10px; }
+    #currentOut { margin-top: 20px; font-size: 22px; font-weight: bold; cursor: pointer; }
+    #log { margin-top: 20px; font-size: 16px; white-space: pre-wrap; text-align: left; }
+    #adminOptions { display: none; margin-top: 20px; }
+    #bottomButtons { margin-top: 40px; }
+  </style>
+</head>
+<body>
+  <h1 id="pageTitle">Classroom Sign-Out Tracker</h1>
+
+  <select id="studentSelect"></select><br>
+  <button id="leaveBtn">Leave class</button>
+
+  <div id="currentOut"></div>
+
+  <div id="bottomButtons">
+    <button id="viewLogBtn">View Time Log</button>
+    <button id="adminBtn">Admin</button>
+  </div>
+
+  <div id="log"></div>
+
+  <div id="adminOptions">
+    <button id="addStudentBtn">Add Student</button>
+    <button id="removeStudentBtn">Remove Student</button>
+    <button id="clearLogsBtn">Clear Logs</button>
+    <button id="changeTitleBtn">Change Title</button>
+    <button id="closeAdminBtn">Close Admin</button>
+  </div>
+
+  <script>
+    const leaveBtn = document.getElementById("leaveBtn");
+    const viewLogBtn = document.getElementById("viewLogBtn");
+    const adminBtn = document.getElementById("adminBtn");
+    const closeAdminBtn = document.getElementById("closeAdminBtn");
+    const adminOptions = document.getElementById("adminOptions");
+    const studentSelect = document.getElementById("studentSelect");
+    const currentOutDiv = document.getElementById("currentOut");
+    const logDiv = document.getElementById("log");
+    const pageTitle = document.getElementById("pageTitle");
+
+    let students = JSON.parse(localStorage.getItem("students")) || ["Alice","Bob","Charlie"];
+    let logs = JSON.parse(localStorage.getItem("logs")) || [];
+    let currentOut = JSON.parse(localStorage.getItem("currentOut")) || [];
+
+    function saveData() {
+      localStorage.setItem("students", JSON.stringify(students));
+      localStorage.setItem("logs", JSON.stringify(logs));
+      localStorage.setItem("currentOut", JSON.stringify(currentOut));
+      localStorage.setItem("pageTitle", pageTitle.innerText);
+    }
+
+    function refreshStudents() {
+      studentSelect.innerHTML = "";
+      students.forEach(name => {
+        const opt = document.createElement("option");
+        opt.value = name;
+        opt.textContent = name;
+        studentSelect.appendChild(opt);
+      });
+    }
+
+    function refreshCurrentOut() {
+      if (currentOut.length === 0) {
+        currentOutDiv.innerText = "";
+        return;
+      }
+      currentOutDiv.innerText = "Currently Out: " + currentOut.join(", ") + "\n(click your name when you return)";
+    }
+
+    function logEvent(name, action) {
+      const time = new Date().toLocaleTimeString();
+      logs.push(`${name} - ${action} at ${time}`);
+      saveData();
+    }
+
+    leaveBtn.addEventListener("click", () => {
+      const name = studentSelect.value;
+      if (!name || currentOut.includes(name)) return;
+      currentOut.push(name);
+      logEvent(name, "Left");
+      refreshCurrentOut();
+    });
+
+    currentOutDiv.addEventListener("click", (e) => {
+      if (currentOut.length === 0) return;
+      const clickedName = prompt("Type your name to confirm return:");
+      if (clickedName && currentOut.includes(clickedName)) {
+        currentOut = currentOut.filter(n => n !== clickedName);
+        logEvent(clickedName, "Returned");
+        refreshCurrentOut();
+      }
+    });
+
+    viewLogBtn.addEventListener("click", () => {
+      logDiv.innerText = logs.join("\n");
+    });
+
+    adminBtn.addEventListener("click", () => {
+      const pw = prompt("Enter admin password:");
+      if (pw === "2473") {
+        adminOptions.style.display = "block";
+      } else {
+        alert("Incorrect password");
+      }
+    });
+
+    closeAdminBtn.addEventListener("click", () => {
+      adminOptions.style.display = "none";
+    });
+
+    document.getElementById("addStudentBtn").addEventListener("click", () => {
+      const newName = prompt("Enter new student name:");
+      if (newName && !students.includes(newName)) {
+        students.push(newName);
+        saveData();
+        refreshStudents();
+      }
+    });
+
+    document.getElementById("removeStudentBtn").addEventListener("click", () => {
+      const removeName = prompt("Enter student name to remove:");
+      if (removeName && students.includes(removeName)) {
+        students = students.filter(s => s !== removeName);
+        saveData();
+        refreshStudents();
+      }
+    });
+
+    document.getElementById("clearLogsBtn").addEventListener("click", () => {
+      if (confirm("Clear all logs?")) {
+        logs = [];
+        saveData();
+        logDiv.innerText = "";
+      }
+    });
+
+    document.getElementById("changeTitleBtn").addEventListener("click", () => {
+      const newTitle = prompt("Enter new title:", pageTitle.innerText);
+      if (newTitle) {
+        pageTitle.innerText = newTitle;
+        saveData();
+      }
+    });
+
+    window.addEventListener("load", () => {
+      refreshStudents();
+      refreshCurrentOut();
+      const savedTitle = localStorage.getItem("pageTitle");
+      if (savedTitle) pageTitle.innerText = savedTitle;
+    });
+  </script>
+</body>
+</html>
