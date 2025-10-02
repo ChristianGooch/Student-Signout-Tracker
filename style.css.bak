@@ -10,8 +10,6 @@ select{font-size:20px;padding:10px;margin:8px 0;width:90%;max-width:480px;}
 #outList{margin-top:14px;font-size:20px;text-align:center;}
 .panel{background:white;padding:12px;border-radius:10px;margin-top:14px;box-shadow:0 6px 18px rgba(2,6,23,0.08);max-width:740px;margin-left:auto;margin-right:auto;}
 .hidden{display:none;}
-
-
 .outBtn {
   background: #dc2626; /* red */
   color: white;
@@ -20,7 +18,18 @@ select{font-size:20px;padding:10px;margin:8px 0;width:90%;max-width:480px;}
   border-radius: 10px;  /* match main buttons */
   cursor: pointer;
 }
+
 .outBtn:active {
   background: #b91c1c; /* darker red when tapped */
   transform: translateY(1px); /* optional for press effect */
 }
+
+
+
+/*.outBtn {
+  background: #dc2626; /* red */
+/*  color: white;
+}
+.outBtn:active {
+  background: #b91c1c; /* darker red when tapped */
+/*} */

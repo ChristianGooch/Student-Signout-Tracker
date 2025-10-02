@@ -1,155 +1,61 @@
-let students = JSON.parse(localStorage.getItem("students")) || ["Alice","Bob","Charlie"];
-let outStudents = JSON.parse(localStorage.getItem("outStudents")) || [];
-let logs = JSON.parse(localStorage.getItem("logs")) || [];
-let customTitle = localStorage.getItem("customTitle") || "Classroom Sign-Out Tracker";
 
-const studentSelect = document.getElementById("studentSelect");
-const leaveBtn = document.getElementById("leaveBtn");
-const viewLogBtn = document.getElementById("viewLogBtn");
-const adminBtn = document.getElementById("adminBtn");
-const outList = document.getElementById("outList");
-const instructions = document.getElementById("instructions");
-const logView = document.getElementById("logView");
-const logTableBody = document.querySelector("#logTable tbody");
-const closeLogBtn = document.getElementById("closeLogBtn");
-const adminPanel = document.getElementById("adminPanel");
-const addStudentBtn = document.getElementById("addStudentBtn");
-const removeStudentBtn = document.getElementById("removeStudentBtn");
-const clearLogBtn = document.getElementById("clearLogBtn");
-const changeTitleBtn = document.getElementById("changeTitleBtn");
-const closeAdminBtn = document.getElementById("closeAdminBtn");
-const mainTitle = document.getElementById("mainTitle");
+const studentSelect = document.getElementById('studentSelect');
+const leaveBtn = document.getElementById('leaveBtn');
+const outList = document.getElementById('outList');
+const viewLogBtn = document.getElementById('viewLogBtn');
+const adminBtn = document.getElementById('adminBtn');
+const adminPanel = document.getElementById('adminPanel');
+const addStudentBtn = document.getElementById('addStudentBtn');
+const removeStudentBtn = document.getElementById('removeStudentBtn');
+const clearLogBtn = document.getElementById('clearLogBtn');
+const editTitleBtn = document.getElementById('editTitleBtn');
+const closeAdminBtn = document.getElementById('closeAdminBtn');
+const logPanel = document.getElementById('logPanel');
+const logList = document.getElementById('logList');
+const closeLogBtn = document.getElementById('closeLogBtn');
+const pageTitle = document.getElementById('pageTitle');
 
-mainTitle.textContent = customTitle;
+let students = JSON.parse(localStorage.getItem('students')) || ['Alice','Bob','Charlie'];
+let outStudents = JSON.parse(localStorage.getItem('outStudents')) || [];
+let logs = JSON.parse(localStorage.getItem('logs')) || [];
 
-function renderStudents() {
-  studentSelect.innerHTML = "";
-  students.forEach(name => {
-    let opt = document.createElement("option");
-    opt.value = name;
-    opt.textContent = name;
-    studentSelect.appendChild(opt);
-  });
-}
-renderStudents();
+function save(){ localStorage.setItem('students', JSON.stringify(students)); localStorage.setItem('outStudents', JSON.stringify(outStudents)); localStorage.setItem('logs', JSON.stringify(logs)); localStorage.setItem('pageTitle', pageTitle.textContent); }
 
-function saveData() {
-  localStorage.setItem("students", JSON.stringify(students));
-  localStorage.setItem("outStudents", JSON.stringify(outStudents));
-  localStorage.setItem("logs", JSON.stringify(logs));
-  localStorage.setItem("customTitle", mainTitle.textContent);
-}
+function renderStudents(){ studentSelect.innerHTML = students.map(s=>`<option value="${s}">${s}</option>`).join(''); }
+function renderOut(){ if(outStudents.length===0){ outList.textContent='No one is out'; return; } outList.innerHTML = outStudents.map(n=>`<button class="btn outBtn" onclick="attemptReturn('${n}')">${n}</button>`).join(' '); }
 
-function renderOutList() {
-  outList.innerHTML = "";
-  if(outStudents.length > 0){
-    instructions.textContent = "Click your name when you return.";
-  } else {
-    instructions.textContent = "";
-  }
-  outStudents.forEach(out => {
-    let li = document.createElement("li");
-    li.textContent = out.name + " (Left at " + out.leave + ")";
-    li.addEventListener("click", () => {
-      if(confirm("Are you " + out.name + "? Confirm to return.")){
-        let idx = logs.findIndex(l => l.name === out.name && !l.return);
-        if(idx > -1){
-          logs[idx].return = new Date().toLocaleTimeString();
-        }
-        outStudents = outStudents.filter(s => s.name !== out.name);
-        saveData();
-        renderOutList();
-      }
-    });
-    outList.appendChild(li);
-  });
-}
-renderOutList();
+leaveBtn.onclick = ()=>{
+    const name = studentSelect.value;
+    if(!name) return;
 
-leaveBtn.addEventListener("click", () => {
-  if(outStudents.length >= 2){
-    alert("Only 2 students can be out at once.");
-    return;
-  }
-  const name = studentSelect.value;
-  if(outStudents.some(s => s.name === name)){
-    alert(name + " is already out.");
-    return;
-  }
-  const leaveTime = new Date().toLocaleTimeString();
-  outStudents.push({name: name, leave: leaveTime});
-  logs.push({name: name, leave: leaveTime, return: null});
-  saveData();
-  renderOutList();
-});
+    if(outStudents.includes(name)){
+        alert(name+' is already out');
+        return;
+    }
 
-viewLogBtn.addEventListener("click", () => {
-  logTableBody.innerHTML = "";
-  logs.forEach(l => {
-    let row = document.createElement("tr");
-    row.innerHTML = `<td>${l.name}</td><td>${l.leave}</td><td>${l.return || ""}</td>`;
-    logTableBody.appendChild(row);
-  });
-  logView.style.display = "block";
-});
+    if(outStudents.length >= 2){  // <-- limit check
+        alert('Only 2 students can be out at the same time.');
+        return;
+    }
 
-closeLogBtn.addEventListener("click", () => {
-  logView.style.display = "none";
-});
+    const t = new Date().toLocaleTimeString();
+    outStudents.push(name);
+    logs.push({name, leave: t, return: null});
+    save();
+    renderOut();
+};
 
-adminBtn.addEventListener("click", () => {
-  const pw = prompt("Enter admin password:");
-  if(pw === "2473"){
-    adminPanel.style.display = "block";
-  } else {
-    alert("Incorrect password");
-  }
-});
+window.attemptReturn = function(name){ if(confirm('Are you '+name+'? Confirm to return.')){ const t=new Date().toLocaleTimeString(); const entry = logs.find(l=>l.name===name && !l.return); if(entry) entry.return=t; outStudents = outStudents.filter(n=>n!==name); save(); renderOut(); } };
 
-addStudentBtn.addEventListener("click", () => {
-  const newName = prompt("Enter new student name:");
-  if(newName && !students.includes(newName)){
-    students.push(newName);
-    saveData();
-    renderStudents();
-    alert(newName + " added.");
-  }
-});
+viewLogBtn.onclick = ()=>{ logList.innerHTML = logs.map(l=>`<li>${l.name} left at ${l.leave}${l.return? ', returned at '+l.return: ''}</li>`).join(''); logPanel.classList.remove('hidden'); };
+closeLogBtn.onclick = ()=> logPanel.classList.add('hidden');
 
-removeStudentBtn.addEventListener("click", () => {
-  const name = prompt("Enter the name to remove:");
-  if(name && students.includes(name)){
-    students = students.filter(s => s !== name);
-    outStudents = outStudents.filter(s => s.name !== name);
-    logs = logs.filter(l => l.name !== name);
-    saveData();
-    renderStudents();
-    renderOutList();
-    alert(name + " removed.");
-  }
-});
+adminBtn.onclick = ()=>{ const pw = prompt('Enter admin password:'); if(pw==='2473'){ adminPanel.classList.remove('hidden'); } else alert('Incorrect password'); };
+closeAdminBtn.onclick = ()=> adminPanel.classList.add('hidden');
 
-clearLogBtn.addEventListener("click", () => {
-  if(confirm("Clear all logs?")){
-    logs = [];
-    saveData();
-    alert("Logs cleared.");
-  }
-});
+addStudentBtn.onclick = ()=>{ const name = prompt('New student name:'); if(name && !students.includes(name)){ students.push(name); save(); renderStudents(); } };
+removeStudentBtn.onclick = ()=>{ const name = prompt('Name to remove:'); students = students.filter(s=>s!==name); outStudents = outStudents.filter(s=>s!==name); logs = logs.filter(l=>l.name!==name); save(); renderStudents(); renderOut(); };
+clearLogBtn.onclick = ()=>{ if(confirm('Clear all logs?')){ logs=[]; outStudents=[]; save(); renderOut(); } };
+editTitleBtn.onclick = ()=>{ const t = prompt('Enter new title:', pageTitle.textContent); if(t){ pageTitle.textContent = t; save(); } };
 
-changeTitleBtn.addEventListener("click", () => {
-  const newTitle = prompt("Enter new title for the app:", mainTitle.textContent);
-  if(newTitle){
-    mainTitle.textContent = newTitle;
-    saveData();
-  }
-});
-
-closeAdminBtn.addEventListener("click", () => {
-  adminPanel.style.display = "none";
-});
-
-document.addEventListener("DOMContentLoaded", () => {
-  renderStudents();
-  renderOutList();
-});
+window.onload = ()=>{ const stored = localStorage.getItem('pageTitle'); if(stored) pageTitle.textContent=stored; renderStudents(); renderOut(); };
