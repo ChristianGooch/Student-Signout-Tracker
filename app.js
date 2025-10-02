@@ -22,7 +22,17 @@ let logs = JSON.parse(localStorage.getItem('logs')) || [];
 function save(){ localStorage.setItem('students', JSON.stringify(students)); localStorage.setItem('outStudents', JSON.stringify(outStudents)); localStorage.setItem('logs', JSON.stringify(logs)); localStorage.setItem('pageTitle', pageTitle.textContent); }
 
 function renderStudents(){ studentSelect.innerHTML = students.map(s=>`<option value="${s}">${s}</option>`).join(''); }
-function renderOut(){ if(outStudents.length===0){ outList.textContent='No one is out'; return; } outList.innerHTML = outStudents.map(n=>`<button class="btn outBtn" onclick="attemptReturn('${n}')">${n}</button>`).join(' '); }
+function renderOut() {
+  if (outStudents.length === 0) {
+    outList.textContent = 'No one is out';
+    return;
+  }
+
+  outList.innerHTML = outStudents.map(n => {
+    const studentName = (typeof n === "string") ? n : n.name; 
+    return `<button class="btn outBtn" onclick="attemptReturn('${studentName}')">${studentName}</button>`;
+  }).join(' ');
+}
 
 leaveBtn.onclick = ()=>{
     const name = studentSelect.value;
